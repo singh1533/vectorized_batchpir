@@ -1,0 +1,32 @@
+id: vectorized-batchpir
+name: Vectorized Batch PIR
+category: Lattice-based
+image: vectorized-batchpir-bench:latest
+platform: linux/amd64
+adapter: generic
+honored_params: [num_records, record_bytes, batch_size]
+supports_batch: true
+fixed_params:
+  lattice_dimension: 8192          # BFV poly_modulus_degree, compiled in (DatabaseConstants::PolyDegree)
+upstream:
+  repo: mhmughees/vectorized_batchpir
+  ref: main
+notes: >
+  BFV/Microsoft-SEAL implementation of Vectorized Batch PIR (IEEE S&P 2023).
+  num_records maps to num_entries and record_bytes to entry_size (the database is
+  generated synthetically inside the server, so record_bytes is genuinely honored).
+  This is a native batch protocol: batch_size is honored in batch mode and the
+  per-query batch is placed via cuckoo hashing. In single mode batch_size is forced
+  to 1 (degenerate but valid). lattice_dimension is NOT exposed — the ring degree is
+  hard-coded at 8192 — so it is logged under unmapped_parameters and never forwarded.
+  Measured phases: setup = server construction (synthetic DB build, hashing,
+  NTT preprocessing); query_generation = create_queries; server_answer =
+  generate_response (headline, multi-trial); client_extract = decode_responses_chunks.
+  client_offline_download is null (hash-map / keys exchanged in-process). Communication
+  is split into query_upload_bytes and response_bytes via SEAL save_size(); the
+  scheme's own combined KB figure is recorded in notes. The FHE parameter table in
+  utils.h is tuned only for specific input strings (32/64/256 x 1048576 x 32, and
+  256 x {10485,104857} x {32,256}); other inputs fall back to default SEAL parameters
+  and may fail to decode (flagged in notes, timings still emitted). Builds for AVX2
+  (x86-64-v3) and does NOT require AVX-512, so it runs under Rosetta for pipeline
+  validation — collect publication numbers on native x86-64.

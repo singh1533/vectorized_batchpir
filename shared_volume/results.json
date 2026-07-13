@@ -1,0 +1,66 @@
+{
+  "scheme": "Vectorized Batch PIR",
+  "variant": null,
+  "parameters_echo": {
+    "database": {
+      "num_records": 16384,
+      "record_bytes": 256
+    },
+    "crypto": {
+      "lattice_dimension": 2048
+    },
+    "benchmark": {
+      "mode": "batch",
+      "batch_size": 4
+    }
+  },
+  "phases": {
+    "setup": {
+      "mean_ms": 913.843,
+      "note": "BatchPIRServer construction: synthetic database generation, simple/cuckoo hashing into buckets, and NTT preprocessing of the PIR database. Measured once (client key generation not separately timed)."
+    },
+    "client_offline_download": {
+      "mean_ms": null,
+      "note": "No separate client offline-download phase: the bucket hash-map and Galois/relin keys are exchanged in-process and are not independently timed by the binary."
+    },
+    "query_generation": {
+      "mean_ms": 2.16029,
+      "note": "create_queries: cuckoo hashing of the requested batch plus BFV encryption of the per-bucket query vectors."
+    },
+    "server_answer": {
+      "mean_ms": 5362.38,
+      "std_dev_ms": 24.09874166839401,
+      "all_trials_ms": [
+        5394.62,
+        5329.77,
+        5354.94,
+        5358.09,
+        5374.48
+      ],
+      "num_trials": 5,
+      "note": "generate_response over the encrypted batch query; headline metric. Trials re-run on identical queries after a single setup."
+    },
+    "client_extract": {
+      "mean_ms": 0.959243,
+      "note": "decode_responses_chunks: decryption and extraction of all batch entries from the server response."
+    }
+  },
+  "communication": {
+    "offline_download_bytes": null,
+    "query_upload_bytes": 789730,
+    "response_bytes": 263281
+  },
+  "unmapped_parameters": {
+    "lattice_dimension": {
+      "value": 2048,
+      "note": "Not exposed by the binary. The BFV ring dimension is compiled in (DatabaseConstants::PolyDegree = 8192). No flag changes it, so lattice_dimension is logged and dropped, never forwarded."
+    }
+  },
+  "notes": [
+    "mode=batch: retrieving batch_size=4 records per query.",
+    "Scheme-reported total serialized communication (query+response): 642 KB (~657408 bytes). Reported here split into query_upload_bytes and response_bytes measured directly via save_size().",
+    "Decoded batch entries verified against the server database.",
+    "FHE parameter-table selection string: '4,16384,256'. Known-good combos: 32/64/256 x 1048576 x 32, and 256 x {10485,104857} x {32,256}; other inputs fall back to default SEAL parameters.",
+    "Built for AVX2 (x86-64-v3); does NOT require AVX-512. Apple-Silicon-via-Rosetta timings are for pipeline validation only \u2014 collect publication numbers on native x86-64."
+  ]
+}

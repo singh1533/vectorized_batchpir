@@ -1,0 +1,37 @@
+# Build artifacts (rebuilt inside the image)
+build/
+**/build/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+*.o
+*.a
+*.so
+*.exe
+
+# Benchmark / runtime data
+shared_volume/
+
+# VCS and editor/IDE cruft
+.git/
+.gitignore
+.vscode/
+.idea/
+*.swp
+*~
+
+# Docs / licenses (not needed in the image)
+*.md
+LICENSE
+
+# Host-side platform metadata (read by the platform, not needed in the image)
+pir-scheme.yaml
+
+# OS / logs
+.DS_Store
+**/.DS_Store
+*.log
+
+# NOTE: wrapper.py is intentionally NOT ignored — it must be in the build context.
